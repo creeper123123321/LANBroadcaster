@@ -7,6 +7,8 @@ import java.net.*;
 import java.util.Enumeration;
 import java.util.logging.Logger;
 
+import static java.nio.charset.StandardCharsets.*;
+
 @RequiredArgsConstructor
 public class LANBroadcaster implements Runnable {
     public static final String BROADCAST_HOST = "224.0.2.60:4445";
@@ -15,7 +17,7 @@ public class LANBroadcaster implements Runnable {
     private final int port;
     private final String motd;
     private final String configuredIP;
-    private final Logger logger;
+    private final Logger log;
     @Setter
     private boolean running = true;
 
@@ -33,9 +35,9 @@ public class LANBroadcaster implements Runnable {
     @Override
     public void run() {
         try {
-            final byte[] ad = getAd();
+            byte[] ad = getAd();
             String[] host = BROADCAST_HOST.split(":");
-            final DatagramPacket packet = new DatagramPacket(ad, ad.length, InetAddress.getByName(host[0]), Integer.parseInt(host[1]));
+            DatagramPacket packet = new DatagramPacket(ad, ad.length, InetAddress.getByName(host[0]), Integer.parseInt(host[1]));
             broadcast(socket, packet);
         } catch (Exception e) {
             e.printStackTrace();
@@ -43,7 +45,7 @@ public class LANBroadcaster implements Runnable {
         socket.close();
     }
 
-    private void broadcast(final DatagramSocket socket, final DatagramPacket packet) {
+    private void broadcast(DatagramSocket socket, DatagramPacket packet) {
         try {
             while (running) {
                 try {
@@ -62,9 +64,9 @@ public class LANBroadcaster implements Runnable {
             ex.printStackTrace();
         }
         if (failcount < 5) {
-            logger.warning("Failed to broadcast, trying again in 10 seconds...");
+            log.warning("Failed to broadcast, trying again in 10 seconds...");
         } else if (failcount == 5) {
-            logger.severe("Broadcasting will not work until the network is fixed. Warnings disabled.");
+            log.severe("Broadcasting will not work until the network is fixed. Warnings disabled.");
         }
         Thread.sleep(8500);
     }
@@ -74,12 +76,12 @@ public class LANBroadcaster implements Runnable {
         String ip = getLanIP(), ad = ip + ':' + port;
         if (isBukkit1_6() || isBungee()) {
             ad = String.valueOf(port);
-            logger.info("Broadcasting server with port " + ad + " over LAN.");
+            log.info("Broadcasting server with port " + ad + " over LAN.");
         } else {
-            logger.info("Broadcasting " + ip + " over LAN.");
+            log.info("Broadcasting " + ip + " over LAN.");
         }
         String str = "[MOTD]" + motd + "[/MOTD][AD]" + ad + "[/AD]";
-        return str.getBytes("UTF-8");
+        return str.getBytes(UTF_8);
     }
 
     private String getLanIP() {
@@ -99,12 +101,12 @@ public class LANBroadcaster implements Runnable {
             throw new Exception("No usable IPv4 non-loopback address found");
         } catch (Exception e) {
             e.printStackTrace();
-            logger.severe("Could not automatically detect LAN IP, please set server-ip in server.properties.");
+            log.severe("Could not automatically detect LAN IP, please set server-ip in server.properties.");
             try {
                 return InetAddress.getLocalHost().getHostAddress();
             } catch (UnknownHostException ex) {
                 ex.printStackTrace();
-                logger.severe("No network interfaces found!");
+                log.severe("No network interfaces found!");
                 return "End of the world";
             }
         }
