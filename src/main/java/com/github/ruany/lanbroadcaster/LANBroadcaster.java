@@ -11,7 +11,7 @@ import static java.nio.charset.StandardCharsets.*;
 
 @RequiredArgsConstructor
 public class LANBroadcaster implements Runnable {
-    public static final String BROADCAST_HOST = "224.0.2.60:4445";
+    public static final InetSocketAddress BROADCAST_ADDR = new InetSocketAddress("224.0.2.60", 4445);
     private int failcount = 0;
     private final DatagramSocket socket;
     private final int port;
@@ -36,8 +36,7 @@ public class LANBroadcaster implements Runnable {
     public void run() {
         try {
             byte[] ad = getAd();
-            String[] host = BROADCAST_HOST.split(":");
-            DatagramPacket packet = new DatagramPacket(ad, ad.length, InetAddress.getByName(host[0]), Integer.parseInt(host[1]));
+            DatagramPacket packet = new DatagramPacket(ad, ad.length, BROADCAST_ADDR);
             broadcast(socket, packet);
         } catch (Exception e) {
             e.printStackTrace();
@@ -73,11 +72,13 @@ public class LANBroadcaster implements Runnable {
 
     @SneakyThrows
     private byte[] getAd() {
-        String ip = getLanIP(), ad = ip + ':' + port;
-        if (isBukkit1_6() || isBungee()) {
+        String ad;
+        if (isBukkit1_6() || isBungee() || isVelocity()) {
             ad = String.valueOf(port);
             log.info("Broadcasting server with port " + ad + " over LAN.");
         } else {
+            String ip = getLanIP();
+            ad = ip + ':' + port;
             log.info("Broadcasting " + ip + " over LAN.");
         }
         String str = "[MOTD]" + motd + "[/MOTD][AD]" + ad + "[/AD]";
@@ -126,6 +127,15 @@ public class LANBroadcaster implements Runnable {
             Class.forName("net.md_5.bungee.api.plugin.Plugin");
             return true;
         } catch (ClassNotFoundException ex) {
+            return false;
+        }
+    }
+
+    private boolean isVelocity() {
+        try {
+            Class.forName("com.velocitypowered.api.proxy.Player");
+            return true;
+        } catch (ClassNotFoundException e) {
             return false;
         }
     }
