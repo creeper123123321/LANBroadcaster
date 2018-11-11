@@ -85,7 +85,7 @@ public class LANBroadcaster implements Runnable {
     }
 
     private String getLanIP() {
-        if (!configuredIP.equals("")) return configuredIP;
+        if (!configuredIP.isEmpty()) return configuredIP;
         try {
             Enumeration<NetworkInterface> interfaces = NetworkInterface.getNetworkInterfaces();
             while (interfaces.hasMoreElements()) {
